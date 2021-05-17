@@ -23,7 +23,7 @@ def is_zero(x):
     return abs(x) < TOL
 
 
-class Node(object):
+class Node(object):# {{{
 
     """
     The Node is the main building block in bt's tree structure design.
@@ -85,6 +85,9 @@ class Node(object):
         self._lazy_children = {}
         self._universe_tickers = []
         self._childrenv = []  # Shortcut to self.children.values()
+        # fixing when you have children only as strategy
+        self._original_children_are_present = (children is not None) and (
+                len(children) >= 1)
 
         # strategy children helpers
         self._has_strat_children = False
@@ -138,6 +141,7 @@ class Node(object):
         Args:
             dc (bool): Whether or not to deepcopy nodes before adding them.
         """
+        # if at least 1 children is specified
         if children is not None:
             if isinstance(children, dict):
                 # Preserve the names from the dictionary by renaming the nodes
@@ -319,10 +323,10 @@ class Node(object):
         body = "\n".join([edges, below]).rstrip()
         if root:
             return "\n".join(["digraph {", body, "}"])
-        return body
+        return body# }}}
 
 
-class StrategyBase(Node):
+class StrategyBase(Node):# {{{
 
     """
     Strategy Node. Used to define strategy logic within a tree.
@@ -582,7 +586,13 @@ class StrategyBase(Node):
         # setup universe
         funiverse = universe
 
-        if self._universe_tickers:
+
+        # filter only if the node has any children specified as input,
+        # otherwise we use the full universe. If all children are strategies,
+        # funiverse will be empty, to signal that no other ticker should be
+        # used in addition to the strategies
+        if self._original_children_are_present:
+        # if self._universe_tickers:
             # if we have universe_tickers defined, limit universe to
             # those tickers
             valid_filter = list(
@@ -1135,10 +1145,10 @@ class StrategyBase(Node):
             c.setup(self._universe, **self._setup_kwargs)
 
             # update to bring up to speed
-            c.update(self.now)
+            c.update(self.now)# }}}
 
 
-class SecurityBase(Node):
+class SecurityBase(Node):# {{{
 
     """
     Security Node. Used to define a security within a tree.
@@ -1726,10 +1736,10 @@ class SecurityBase(Node):
         """
         Does nothing - securities have nothing to do on run.
         """
-        pass
+        pass# }}}
 
 
-class Security(SecurityBase):
+class Security(SecurityBase):# {{{
     """
     A standard security with no special features, and where notional value
     is measured based on market value (notional times price).
@@ -1739,10 +1749,10 @@ class Security(SecurityBase):
     all securities.
     """
 
-    pass
+    pass# }}}
 
 
-class FixedIncomeSecurity(SecurityBase):
+class FixedIncomeSecurity(SecurityBase):# {{{
     """
     A Fixed Income Security is a security where notional value is
     measured only based on the quantity (par value) of the security.
@@ -1766,10 +1776,10 @@ class FixedIncomeSecurity(SecurityBase):
 
         # For fixed income securities (bonds, swaps), notional value is position size, not value!
         self._notl_value = self._position
-        self._notl_values.values[inow] = self._notl_value
+        self._notl_values.values[inow] = self._notl_value# }}}
 
 
-class CouponPayingSecurity(FixedIncomeSecurity):
+class CouponPayingSecurity(FixedIncomeSecurity):# {{{
     """
     CouponPayingSecurity expands on SecurityBase to handle securities which
     pay (possibly irregular) coupons (or other forms of cash disbursement).
@@ -1948,10 +1958,10 @@ class CouponPayingSecurity(FixedIncomeSecurity):
             self.root.stale
         ):  # Stale check needed because coupon paid depends on position
             self.root.update(self.root.now, None)
-        return self._holding_costs.loc[: self.now]
+        return self._holding_costs.loc[: self.now]# }}}
 
 
-class HedgeSecurity(SecurityBase):
+class HedgeSecurity(SecurityBase):# {{{
     """
     HedgeSecurity is a SecurityBase where the notional value is set to zero, and thus
     does not count towards the notional value of the strategy. It is intended for use
@@ -1969,10 +1979,10 @@ class HedgeSecurity(SecurityBase):
         """
         super(HedgeSecurity, self).update(date, data, inow)
         self._notl_value = 0.0
-        self._notl_values.values.fill(0.0)
+        self._notl_values.values.fill(0.0)# }}}
 
 
-class CouponPayingHedgeSecurity(CouponPayingSecurity):
+class CouponPayingHedgeSecurity(CouponPayingSecurity):# {{{
     """
     CouponPayingHedgeSecurity is a CouponPayingSecurity where the notional value is set to zero, and thus
     does not count towards the notional value of the strategy. It is intended for use
@@ -1990,10 +2000,10 @@ class CouponPayingHedgeSecurity(CouponPayingSecurity):
         """
         super(CouponPayingHedgeSecurity, self).update(date, data, inow)
         self._notl_value = 0.0
-        self._notl_values.values.fill(0.0)
+        self._notl_values.values.fill(0.0)# }}}
 
 
-class Algo(object):
+class Algo(object):# {{{
 
     """
     Algos are used to modularize strategy logic so that strategy logic becomes
@@ -2026,10 +2036,10 @@ class Algo(object):
         return self._name
 
     def __call__(self, target):
-        raise NotImplementedError("%s not implemented!" % self.name)
+        raise NotImplementedError("%s not implemented!" % self.name)# }}}
 
 
-class AlgoStack(Algo):
+class AlgoStack(Algo):# {{{
 
     """
     An AlgoStack derives from Algo runs multiple Algos until a
@@ -2067,10 +2077,10 @@ class AlgoStack(Algo):
                 elif hasattr(algo, "run_always"):
                     if algo.run_always:
                         algo(target)
-            return res
+            return res# }}}
 
 
-class Strategy(StrategyBase):
+class Strategy(StrategyBase):# {{{
 
     """
     Strategy expands on the StrategyBase and incorporates Algos.
@@ -2117,10 +2127,10 @@ class Strategy(StrategyBase):
 
         # run children
         for c in self._childrenv:
-            c.run()
+            c.run()# }}}
 
 
-class FixedIncomeStrategy(Strategy):
+class FixedIncomeStrategy(Strategy):# {{{
     """
     FixedIncomeStrategy is an alias for Strategy where the fixed_income flag
     is set to True.
@@ -2142,4 +2152,4 @@ class FixedIncomeStrategy(Strategy):
 
     def __init__(self, name, algos=None, children=None):
         super(FixedIncomeStrategy, self).__init__(name, algos=algos, children=children)
-        self._fixed_income = True
+        self._fixed_income = True# }}}

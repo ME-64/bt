@@ -1,6 +1,8 @@
 from . import core
-from . import algos
+# from . import algos
 from . import backtest
+
+from .algos import *
 
 from .backtest import Backtest, run
 from .core import Strategy, Algo, AlgoStack, FixedIncomeStrategy

@@ -16,17 +16,16 @@ import bt
 from bt.core import Algo, AlgoStack, SecurityBase, is_zero
 
 
-def run_always(f):
+def run_always(f):# {{{
     """
     Run always decorator to be used with Algo
     to ensure stack runs the decorated Algo
     on each pass, regardless of failures in the stack.
     """
     f.run_always = True
-    return f
+    return f# }}}
 
-
-class PrintDate(Algo):
+class PrintDate(Algo):# {{{
 
     """
     This Algo simply print's the current date.
@@ -36,10 +35,9 @@ class PrintDate(Algo):
 
     def __call__(self, target):
         print(target.now)
-        return True
+        return True# }}}
 
-
-class PrintTempData(Algo):
+class PrintTempData(Algo):# {{{
 
     """
     This Algo prints the temp data.
@@ -61,10 +59,9 @@ class PrintTempData(Algo):
             print(self.fmt_string.format(**target.temp))
         else:
             print(target.temp)
-        return True
+        return True# }}}
 
-
-class PrintInfo(Algo):
+class PrintInfo(Algo):# {{{
 
     """
     Prints out info associated with the target strategy. Useful for debugging
@@ -90,10 +87,9 @@ class PrintInfo(Algo):
 
     def __call__(self, target):
         print(self.fmt_string.format(**target.__dict__))
-        return True
+        return True# }}}
 
-
-class Debug(Algo):
+class Debug(Algo):# {{{
 
     """
     Utility Algo that calls pdb.set_trace when triggered.
@@ -106,10 +102,9 @@ class Debug(Algo):
         import pdb
 
         pdb.set_trace()
-        return True
+        return True# }}}
 
-
-class RunOnce(Algo):
+class RunOnce(Algo):# {{{
 
     """
     Returns True on first run then returns False.
@@ -134,10 +129,9 @@ class RunOnce(Algo):
             return True
 
         # return false to stop future execution
-        return False
+        return False# }}}
 
-
-class RunPeriod(Algo):
+class RunPeriod(Algo):# {{{
     def __init__(
         self, run_on_first_date=True, run_on_end_of_period=False, run_on_last_date=False
     ):
@@ -192,10 +186,9 @@ class RunPeriod(Algo):
 
     @abc.abstractmethod
     def compare_dates(self, now, date_to_compare):
-        raise (NotImplementedError("RunPeriod Algo is an abstract class!"))
+        raise (NotImplementedError("RunPeriod Algo is an abstract class!"))# }}}
 
-
-class RunDaily(RunPeriod):
+class RunDaily(RunPeriod):# {{{
 
     """
     Returns True on day change.
@@ -215,10 +208,9 @@ class RunDaily(RunPeriod):
     def compare_dates(self, now, date_to_compare):
         if now.date() != date_to_compare.date():
             return True
-        return False
+        return False# }}}
 
-
-class RunWeekly(RunPeriod):
+class RunWeekly(RunPeriod):# {{{
 
     """
     Returns True on week change.
@@ -238,10 +230,9 @@ class RunWeekly(RunPeriod):
     def compare_dates(self, now, date_to_compare):
         if now.year != date_to_compare.year or now.week != date_to_compare.week:
             return True
-        return False
+        return False# }}}
 
-
-class RunMonthly(RunPeriod):
+class RunMonthly(RunPeriod):# {{{
 
     """
     Returns True on month change.
@@ -261,10 +252,9 @@ class RunMonthly(RunPeriod):
     def compare_dates(self, now, date_to_compare):
         if now.year != date_to_compare.year or now.month != date_to_compare.month:
             return True
-        return False
+        return False# }}}
 
-
-class RunQuarterly(RunPeriod):
+class RunQuarterly(RunPeriod):# {{{
 
     """
     Returns True on quarter change.
@@ -284,10 +274,9 @@ class RunQuarterly(RunPeriod):
     def compare_dates(self, now, date_to_compare):
         if now.year != date_to_compare.year or now.quarter != date_to_compare.quarter:
             return True
-        return False
+        return False# }}}
 
-
-class RunYearly(RunPeriod):
+class RunYearly(RunPeriod):# {{{
 
     """
     Returns True on year change.
@@ -307,10 +296,9 @@ class RunYearly(RunPeriod):
     def compare_dates(self, now, date_to_compare):
         if now.year != date_to_compare.year:
             return True
-        return False
+        return False# }}}
 
-
-class RunOnDate(Algo):
+class RunOnDate(Algo):# {{{
 
     """
     Returns True on a specific set of dates.
@@ -332,10 +320,9 @@ class RunOnDate(Algo):
         self.dates = [pd.to_datetime(d) for d in dates]
 
     def __call__(self, target):
-        return target.now in self.dates
+        return target.now in self.dates# }}}
 
-
-class RunAfterDate(Algo):
+class RunAfterDate(Algo):# {{{
 
     """
     Returns True after a date has passed
@@ -359,10 +346,9 @@ class RunAfterDate(Algo):
         self.date = pd.to_datetime(date)
 
     def __call__(self, target):
-        return target.now > self.date
+        return target.now > self.date# }}}
 
-
-class RunAfterDays(Algo):
+class RunAfterDays(Algo):# {{{
 
     """
     Returns True after a specific number of 'warmup' trading days have passed
@@ -388,10 +374,9 @@ class RunAfterDays(Algo):
         if self.days > 0:
             self.days -= 1
             return False
-        return True
+        return True# }}}
 
-
-class RunIfOutOfBounds(Algo):
+class RunIfOutOfBounds(Algo):# {{{
 
     """
     This algo returns true if any of the target weights deviate by an amount greater
@@ -435,10 +420,9 @@ class RunIfOutOfBounds(Algo):
             if cash_deviation > self.tolerance:
                 return True
 
-        return False
+        return False# }}}
 
-
-class RunEveryNPeriods(Algo):
+class RunEveryNPeriods(Algo):# {{{
 
     """
     This algo runs every n periods.
@@ -475,13 +459,12 @@ class RunEveryNPeriods(Algo):
                 return True
             else:
                 self.idx += 1
-                return False
+                return False# }}}
 
-
-class SelectAll(Algo):
+class SelectAll(Algo):# {{{
 
     """
-    Sets temp['selected'] with all securities (based on universe).
+    Sets temp['selected'] with all securities as longs (based on universe).
 
     Selects all the securities and saves them in temp['selected'].
     By default, SelectAll does not include securities that have no
@@ -502,52 +485,73 @@ class SelectAll(Algo):
         self.include_negative = include_negative
 
     def __call__(self, target):
+        target.temp['selected'] = {}
+        universe = target.universe.loc[target.now]
+        selected = list(universe.loc[(~universe.isna()) & (universe > 0)])
+
         if self.include_no_data:
-            target.temp["selected"] = target.universe.columns
-        else:
-            universe = target.universe.loc[target.now].dropna()
-            if self.include_negative:
-                target.temp["selected"] = list(universe.index)
-            else:
-                target.temp["selected"] = list(universe[universe > 0].index)
-        return True
+            negs = list(universe.loc[universe <= 0])
+            selected.append(negs)
+        if self.include_negative:
+            nas = list(universe.loc[universe.isna()])
+            selected.append(nas)
 
+        target.temp['selected']['long'] = selected
+        return True# }}}
 
-class SelectThese(Algo):
+class SelectThese(Algo):# {{{
 
     """
-    Sets temp['selected'] with a set list of tickers.
+    Sets temp['selected'] with a set list of tickers for long and short
 
     Args:
-        * ticker (list): List of tickers to select.
+        * long_tickers (list): List of tickers to select long
+        * short_tickers (list): List of tickers to select short
         * include_no_data (bool): Include securities that do not have data?
         * include_negative (bool): Include securities that have negative
           or zero prices?
+        * filter_selected (bool): If True, will only select from the existing
+          'selected' list.
 
     Sets:
         * selected
 
     """
 
-    def __init__(self, tickers, include_no_data=False, include_negative=False):
+    def __init__(self, long_tickers, short_tickers, include_no_data=False, include_negative=False,
+            filter_selected=False):
         super(SelectThese, self).__init__()
         self.tickers = tickers
+        self.long_tickers = long_tickers
+        self.short_tickers = short_tickers
         self.include_no_data = include_no_data
         self.include_negative = include_negative
+        self.filter_selected = filter_selected
 
     def __call__(self, target):
+        if self.filter_selected and 'selected' in target.temp:
+            longs = [x for x in target.temp['selected']['long'] if x in self.long_tickers]
+            shorts = [x for x in target.temp['selected']['short'] if x in self.short_tickers]
+        elif self.filter_selected and "selected" not in target.temp:
+            target.temp['selected'] = {'long': [], 'short': []}
+           return True
+       else:
+           longs = self.long_tickers
+           shorts = self.short_tickers
+
+        target.temp['selected'] = {}
+        universe = target.universe
+        selected = list(universe.loc[(~universe.isna()) & (universe > 0)])
         if self.include_no_data:
-            target.temp["selected"] = self.tickers
-        else:
-            universe = target.universe.loc[target.now, self.tickers].dropna()
-            if self.include_negative:
-                target.temp["selected"] = list(universe.index)
-            else:
-                target.temp["selected"] = list(universe[universe > 0].index)
-        return True
+            selected.append(list(universe.loc[universe <= 0]))
+        if self.include_negative:
+            selected.append(list(universe.loc[universe.isna()]))
 
+        target.temp['selected']['long'] = [x for x in selected if x in longs]
+        target.temp['selected']['short'] = [x for x in selected if x in shorts]
+        return True# }}}
 
-class SelectHasData(Algo):
+class SelectHasData(Algo):# {{{
 
     """
     Sets temp['selected'] based on all items in universe that meet
@@ -556,6 +560,9 @@ class SelectHasData(Algo):
     This is a more advanced version of SelectAll. Useful for selecting
     tickers that need a certain amount of data for future algos to run
     properly.
+
+    If there is nothing already in selected (long or short) it will start
+    with the whole universe and assign everything to temp['selected']['long']
 
     For example, if we need the items with 3 months of data or more,
     we could use this Algo with a lookback period of 3 months.
@@ -578,6 +585,8 @@ class SelectHasData(Algo):
           used to estimate the number of points required.
         * include_no_data (bool): Include securities that do not have data?
         * include_negative (bool): Include securities that have negative
+        * filter_selected (bool): If True, will only select from the existing
+          'selected' list.
           or zero prices?
     Sets:
         * selected
@@ -590,6 +599,7 @@ class SelectHasData(Algo):
         min_count=None,
         include_no_data=False,
         include_negative=False,
+        filter_selected=False,
     ):
         super(SelectHasData, self).__init__()
         self.lookback = lookback
@@ -600,36 +610,51 @@ class SelectHasData(Algo):
         self.include_negative = include_negative
 
     def __call__(self, target):
-        if "selected" in target.temp:
-            selected = target.temp["selected"]
+        if self.filter_selected and 'selected' in target.temp:
+            longs = target.temp['selected']['long']
+            shorts = target.temp['selected']['short']
+            selected = longs + shorts
+        elif self.filter_selected and 'selected' not in target.temp:
+            target.temp['selected'] = {'long': [], 'short': []}
+            return True
         else:
-            selected = target.universe.columns
+            selected = {'long': list(target.universe.columns), 'short': []}
+
 
         filt = target.universe.loc[target.now - self.lookback :, selected]
         cnt = filt.count()
         cnt = cnt[cnt >= self.min_count]
-        if not self.include_no_data:
-            cnt = cnt[~target.universe.loc[target.now, selected].isnull()]
-            if not self.include_negative:
-                cnt = cnt[target.universe.loc[target.now, selected] > 0]
-        target.temp["selected"] = list(cnt.index)
-        return True
 
+        universe = target.universe.loc[target.now]
+        norm_univ = list(universe.loc[(~universe.isna()) & (universe > 0)])
+        if self.include_no_data:
+            norm_univ.append(list(universe.loc[universe <= 0]))
+        if self.include_negative:
+            norm_univ.append(list(universe.loc[universe.isna()]))
 
-class SelectN(Algo):
+        tmp_selected = {}
+        tmp_selected['long'] = [x for x in list(cnt.index) if x in selected['long']]
+        tmp_selected['short'] = [x for x in list(cnt.index) if x in selected['short']]
+        target.temp["selected"] = tmp_selected
+        return True# }}}
+
+class SelectN(Algo):# {{{
 
     """
-    Sets temp['selected'] based on ranking temp['stat'].
+    Sets temp['selected'] based on ranking temp[`stat_name`].
 
-    Selects the top or botton N items based on temp['stat'].
+    Selects the top or botton N items based on temp[`stat_name`].
+    If long_short is True, then the Top and Bottom N will be selected.
     This is usually some kind of metric that will be computed in a
     previous Algo and will be used for ranking purposes. Can select
     top or bottom N based on sort_descending parameter.
 
     Args:
         * n (int): select top n items.
+        * stat_name (string): the name of the stat to use for ranking
         * sort_descending (bool): Should the stat be sorted in descending order
           before selecting the first n items?
+        * long_short (bool): Should the bottom 5 also be selected as 'shorts'
         * all_or_none (bool): If true, only populates temp['selected'] if we
           have n items. If we have less than n, then temp['selected'] = [].
         * filter_selected (bool): If True, will only select from the existing
@@ -639,43 +664,60 @@ class SelectN(Algo):
         * selected
 
     Requires:
-        * stat
+        * stat_name (string) the name of the stat stored in temp to be selected
 
     """
 
     def __init__(
-        self, n, sort_descending=True, all_or_none=False, filter_selected=False
-    ):
+        self, n, stat_name='stat', long_short=False, sort_descending=True, all_or_none=False, filter_selected=False
+   ):
         super(SelectN, self).__init__()
         if n < 0:
             raise ValueError("n cannot be negative")
         self.n = n
+        self.stat_name = stat_name
         self.ascending = not sort_descending
         self.all_or_none = all_or_none
         self.filter_selected = filter_selected
+        self.long_short = False
 
     def __call__(self, target):
-        stat = target.temp["stat"].dropna()
+        stat = target.temp[stat_name].dropna()
         if self.filter_selected and "selected" in target.temp:
-            stat = stat.loc[stat.index.intersection(target.temp["selected"])]
-        stat.sort_values(ascending=self.ascending, inplace=True)
+            stat_long = stat.loc[stat.index.intersection(target.temp["selected"]['long'])]
+            stat_short = stat.loc[stat.index.intersection(target.temp['selected']['short'])]
+        elif self.filter_selected and "selected" not in target.temp:
+            target.temp['selected'] = {'long': [], 'short': []}
+           return True
+
+        stat_long.sort_values(ascending=self.ascending, inplace=True)
+        stat_short.sort_values(ascending=self.ascending, inplace=True)
 
         # handle percent n
         keep_n = self.n
         if self.n < 1:
-            keep_n = int(self.n * len(stat))
+            keep_n = int(self.n * (len(stat_long) + len(stat_short)))
 
-        sel = list(stat[:keep_n].index)
+        sel_long = list(stat[:keep_n].index)
+        sel_short = list(stat[-keep_n:].index)
 
-        if self.all_or_none and len(sel) < keep_n:
-            sel = []
+        if self.long_short:
+            fin_sel_long = [x for x in sel_long if x not in sel_short]
+            fin_sel_short = [x for x in sel_short if x not in sel_long]
+        else:
+            fin_sel_long = sel_long
+            fin_sel_short = []
 
-        target.temp["selected"] = sel
+        if self.all_or_none and (len(fin_sel_long) < keep_n or len(fin_sel_short) < keep_n):
+            fin_sel_long = []
+            fin_sel_short = []
 
-        return True
+        target.temp["selected"]['long'] = fin_sel_long
+        target.temp["selected"]['short'] = fin_sel_short
 
+        return True# }}}
 
-class SelectMomentum(AlgoStack):
+class SelectMomentum(AlgoStack):# {{{
 
     """
     Sets temp['selected'] based on a simple momentum filter.
@@ -692,9 +734,14 @@ class SelectMomentum(AlgoStack):
         * lookback (DateOffset): lookback period for total return
           calculation
         * lag (DateOffset): Lag interval for total return calculation
+        * stat_name (string): Name of the stat stored in temp. i.e. temp[stat_name]
         * sort_descending (bool): Sort descending (highest return is best)
         * all_or_none (bool): If true, only populates temp['selected'] if we
           have n items. If we have less than n, then temp['selected'] = [].
+        * long_short (bool): if True, will also populate temp['selected']['short']
+          with the lowest values by stat
+        * filter_selected (bool): If True, will only select from the existing
+          'selected' list.
 
     Sets:
         * selected
@@ -707,18 +754,22 @@ class SelectMomentum(AlgoStack):
     def __init__(
         self,
         n,
+        stat_name='stat',
         lookback=pd.DateOffset(months=3),
         lag=pd.DateOffset(days=0),
         sort_descending=True,
         all_or_none=False,
+        long_short=False,
+        filter_selected=False
     ):
         super(SelectMomentum, self).__init__(
             StatTotalReturn(lookback=lookback, lag=lag),
-            SelectN(n=n, sort_descending=sort_descending, all_or_none=all_or_none),
-        )
+            SelectN(n=n, stat_name=stat_name,
+                sort_descending=sort_descending, all_or_none=all_or_none,
+                long_short=long_short, filter_selected=filter_selected),
+        )# }}}
 
-
-class SelectWhere(Algo):
+class SelectWhere(Algo):# {{{
 
     """
     Selects securities based on an indicator DataFrame.
@@ -736,13 +787,15 @@ class SelectWhere(Algo):
         * include_no_data (bool): Include securities that do not have data?
         * include_negative (bool): Include securities that have negative
           or zero prices?
+        * filter_selected (bool): If True, will only select from the existing
+          'selected' list.
 
     Sets:
         * selected
 
     """
 
-    def __init__(self, signal, include_no_data=False, include_negative=False):
+    def __init__(self, signal, include_no_data=False, include_negative=False, filter_selected=False):
         super(SelectWhere, self).__init__()
         if isinstance(signal, pd.DataFrame):
             self.signal_name = None
@@ -753,8 +806,16 @@ class SelectWhere(Algo):
 
         self.include_no_data = include_no_data
         self.include_negative = include_negative
+        self.filter_selected = filter_selected
 
     def __call__(self, target):
+        if self.filter_selected and 'selected' in target.temp:
+            longs = target.temp['selected']['long']
+            shorts = target.temp['selected']['short']
+        elif self.filter_selected and 'selected' not in target.temp:
+            target.temp['selected'] = {'long': [], 'short': []}
+            return True
+
         # get signal Series at target.now
         if self.signal_name is None:
             signal = self.signal
@@ -765,20 +826,27 @@ class SelectWhere(Algo):
             sig = signal.loc[target.now]
             # get tickers where True
             # selected = sig.index[sig]
-            selected = sig[sig == True].index  # noqa: E712
+            long_signal = list(sig[sig == True].index)  # noqa: E712
+            short_signal = list(sig[sig == False].index) # noqa: E712
+            if self.filter_selected: # only universe of currently selected signals
+                long_signal = [x for x in long_singal if x in longs]
+                short_signal = [x for x in short_signal if x in shorts]
             # save as list
-            if not self.include_no_data:
-                universe = target.universe.loc[target.now, list(selected)].dropna()
-                if self.include_negative:
-                    selected = list(universe.index)
-                else:
-                    selected = list(universe[universe > 0].index)
-            target.temp["selected"] = list(selected)
 
-        return True
+            universe = target.universe.loc[target.now]
+            negs = list(universe.loc[universe <= 0])
+            nas = list(universe.loc[universe.isna()])
+            selected = list(universe.loc[(~universe.isna()) & (universe > 0)])
+            if self.include_no_data:
+                selected.append(negs)
+            if self.include_negative:
+                selected.append(nas)
 
+            target.temp['selected']['long'] = [x for x in long_signal if x in selected]
+            target.temp['selected']['short'] = [x for x in short_signal if x in selected]
+        return True# }}}
 
-class SelectRandomly(AlgoStack):
+class SelectRandomly(AlgoStack):# {{{
 
     """
     Sets temp['selected'] based on a random subset of
@@ -835,10 +903,9 @@ class SelectRandomly(AlgoStack):
             sel = random.sample(sel, int(n))
 
         target.temp["selected"] = sel
-        return True
+        return True# }}}
 
-
-class SelectRegex(Algo):
+class SelectRegex(Algo):# {{{
 
     """
     Sets temp['selected'] based on a regex on their names.
@@ -862,10 +929,9 @@ class SelectRegex(Algo):
         selected = target.temp["selected"]
         selected = [s for s in selected if self.regex.search(s)]
         target.temp["selected"] = selected
-        return True
+        return True# }}}
 
-
-class ResolveOnTheRun(Algo):
+class ResolveOnTheRun(Algo):# {{{
 
     """
     Looks at securities set in temp['selected'] and searches for names that
@@ -911,10 +977,9 @@ class ResolveOnTheRun(Algo):
         target.temp["selected"] = resolved + [
             s for s in selected if s not in on_the_run.columns
         ]
-        return True
+        return True# }}}
 
-
-class SetStat(Algo):
+class SetStat(Algo):# {{{
 
     """
     Sets temp['stat'] for use by downstream algos (such as SelectN).
@@ -941,13 +1006,12 @@ class SetStat(Algo):
         else:
             stat = target.get_data(self.stat_name)
         target.temp["stat"] = stat.loc[target.now]
-        return True
+        return True# }}}
 
-
-class StatTotalReturn(Algo):
+class StatTotalReturn(Algo):# {{{
 
     """
-    Sets temp['stat'] with total returns over a given period.
+    Sets temp['total_return'] with total returns over a given period.
 
     Sets the 'stat' based on the total return of each element in
     temp['selected'] over a given lookback period. The total return
@@ -972,14 +1036,13 @@ class StatTotalReturn(Algo):
         self.lag = lag
 
     def __call__(self, target):
-        selected = target.temp["selected"]
+        selected = (target.temp["selected"]['long'] + target.temp['selected']['short'])
         t0 = target.now - self.lag
         prc = target.universe.loc[t0 - self.lookback : t0, selected]
-        target.temp["stat"] = prc.calc_total_return()
-        return True
+        target.temp['total_return'] = prc.calc_total_return()
+        return True# }}}
 
-
-class WeighEqually(Algo):
+class WeighEqually(Algo):# {{{
 
     """
     Sets temp['weights'] by calculating equal weights for all items in
@@ -999,19 +1062,21 @@ class WeighEqually(Algo):
         super(WeighEqually, self).__init__()
 
     def __call__(self, target):
-        selected = target.temp["selected"]
+        longs = target.temp['selected']['long']
+        shorts = target.temp['selected']['short']
+        selected = longs + shorts
         n = len(selected)
 
         if n == 0:
             target.temp["weights"] = {}
         else:
             w = 1.0 / n
-            target.temp["weights"] = {x: w for x in selected}
+            target.temp['weights'] = {x: w for x in selected if x in longs}
+            # target.temp['weights'] = {x: -w for x in selected if x in shorts}
+            target.temp['weights'].update({x: -w for x in selected if x in shorts})
+        return True# }}}
 
-        return True
-
-
-class WeighSpecified(Algo):
+class WeighSpecified(Algo):# {{{
 
     """
     Sets temp['weights'] based on a provided dict of ticker:weights.
@@ -1033,10 +1098,9 @@ class WeighSpecified(Algo):
     def __call__(self, target):
         # added copy to make sure these are not overwritten
         target.temp["weights"] = self.weights.copy()
-        return True
+        return True# }}}
 
-
-class ScaleWeights(Algo):
+class ScaleWeights(Algo):# {{{
 
     """
     Sets temp['weights'] based on a scaled version of itself.
@@ -1062,10 +1126,9 @@ class ScaleWeights(Algo):
         target.temp["weights"] = {
             k: self.scale * w for k, w in iteritems(target.temp["weights"])
         }
-        return True
+        return True# }}}
 
-
-class WeighTarget(Algo):
+class WeighTarget(Algo):# {{{
 
     """
     Sets target weights based on a target weight DataFrame.
@@ -1116,10 +1179,9 @@ class WeighTarget(Algo):
 
             return True
         else:
-            return False
+            return False# }}}
 
-
-class WeighInvVol(Algo):
+class WeighInvVol(Algo):# {{{
 
     """
     Sets temp['weights'] based on the inverse volatility Algo.
@@ -1160,10 +1222,9 @@ class WeighInvVol(Algo):
         prc = target.universe.loc[t0 - self.lookback : t0, selected]
         tw = bt.ffn.calc_inv_vol_weights(prc.to_returns().dropna())
         target.temp["weights"] = tw.dropna()
-        return True
+        return True# }}}
 
-
-class WeighERC(Algo):
+class WeighERC(Algo):# {{{
 
     """
     Sets temp['weights'] based on equal risk contribution algorithm.
@@ -1248,10 +1309,9 @@ class WeighERC(Algo):
         )
 
         target.temp["weights"] = tw.dropna()
-        return True
+        return True# }}}
 
-
-class WeighMeanVar(Algo):
+class WeighMeanVar(Algo):# {{{
 
     """
     Sets temp['weights'] based on mean-variance optimization.
@@ -1314,10 +1374,9 @@ class WeighMeanVar(Algo):
         )
 
         target.temp["weights"] = tw.dropna()
-        return True
+        return True# }}}
 
-
-class WeighRandomly(Algo):
+class WeighRandomly(Algo):# {{{
 
     """
     Sets temp['weights'] based on a random weight vector.
@@ -1363,10 +1422,9 @@ class WeighRandomly(Algo):
             pass
 
         target.temp["weights"] = w
-        return True
+        return True# }}}
 
-
-class LimitDeltas(Algo):
+class LimitDeltas(Algo):# {{{
 
     """
     Modifies temp['weights'] based on weight delta limits.
@@ -1422,10 +1480,9 @@ class LimitDeltas(Algo):
                     if abs(delta) > lmt:
                         tw[k] = cur + (lmt * np.sign(delta))
 
-        return True
+        return True# }}}
 
-
-class LimitWeights(Algo):
+class LimitWeights(Algo):# {{{
 
     """
     Modifies temp['weights'] based on weight limits.
@@ -1469,10 +1526,9 @@ class LimitWeights(Algo):
             tw = bt.ffn.limit_weights(tw, self.limit)
         target.temp["weights"] = tw
 
-        return True
+        return True# }}}
 
-
-class TargetVol(Algo):
+class TargetVol(Algo):# {{{
     """
     Updates temp['weights'] based on the target annualized volatility desired.
 
@@ -1551,10 +1607,9 @@ class TargetVol(Algo):
         for k in target.temp["weights"].keys():
             target.temp["weights"][k] = target.temp["weights"][k] * mult
 
-        return True
+        return True# }}}
 
-
-class PTE_Rebalance(Algo):
+class PTE_Rebalance(Algo):# {{{
     """
     Triggers a rebalance when PTE from static weights is past a level.
 
@@ -1643,10 +1698,9 @@ class PTE_Rebalance(Algo):
         else:
             return False
 
-        return True
+        return True# }}}
 
-
-class CapitalFlow(Algo):
+class CapitalFlow(Algo):# {{{
 
     """
     Used to model capital flows. Flows can either be inflows or outflows.
@@ -1676,10 +1730,9 @@ class CapitalFlow(Algo):
 
     def __call__(self, target):
         target.adjust(self.amount)
-        return True
+        return True# }}}
 
-
-class CloseDead(Algo):
+class CloseDead(Algo):# {{{
 
     """
     Closes all positions for which prices are equal to zero (we assume
@@ -1713,10 +1766,9 @@ class CloseDead(Algo):
                 if c in targets:
                     del targets[c]
 
-        return True
+        return True# }}}
 
-
-class SetNotional(Algo):
+class SetNotional(Algo):# {{{
 
     """
     Sets the notional_value to use as the base for rebalancing for
@@ -1742,10 +1794,9 @@ class SetNotional(Algo):
 
             return True
         else:
-            return False
+            return False# }}}
 
-
-class Rebalance(Algo):
+class Rebalance(Algo):# {{{
 
     """
     Rebalances capital based on temp['weights']
@@ -1815,10 +1866,9 @@ class Rebalance(Algo):
         # Now update
         target.root.update(target.now)
 
-        return True
+        return True# }}}
 
-
-class RebalanceOverTime(Algo):
+class RebalanceOverTime(Algo):# {{{
 
     """
     Similar to Rebalance but rebalances to target
@@ -1885,10 +1935,9 @@ class RebalanceOverTime(Algo):
                 self._days_left = None
                 self._weights = None
 
-        return True
+        return True# }}}
 
-
-class Require(Algo):
+class Require(Algo):# {{{
 
     """
     Flow control Algo.
@@ -1928,10 +1977,9 @@ class Require(Algo):
         if item is None:
             return self.if_none
 
-        return self.pred(item)
+        return self.pred(item)# }}}
 
-
-class Not(Algo):
+class Not(Algo):# {{{
     """
     Flow control Algo
 
@@ -1947,10 +1995,9 @@ class Not(Algo):
         self._algo = algo
 
     def __call__(self, target):
-        return not self._algo(target)
+        return not self._algo(target)# }}}
 
-
-class Or(Algo):
+class Or(Algo):# {{{
     """
     Flow control Algo
 
@@ -1980,10 +2027,9 @@ class Or(Algo):
             tempRes = algo(target)
             res = res | tempRes
 
-        return res
+        return res# }}}
 
-
-class SelectTypes(Algo):
+class SelectTypes(Algo):# {{{
     """
     Sets temp['selected'] based on node type.
     If temp['selected'] is already set, it will filter the existing
@@ -2012,10 +2058,9 @@ class SelectTypes(Algo):
         if "selected" in target.temp:
             selected = [s for s in selected if s in target.temp["selected"]]
         target.temp["selected"] = selected
-        return True
+        return True# }}}
 
-
-class ClosePositionsAfterDates(Algo):
+class ClosePositionsAfterDates(Algo):# {{{
 
     """
     Close positions on securities after a given date.
@@ -2069,10 +2114,9 @@ class ClosePositionsAfterDates(Algo):
         # Now update
         target.root.update(target.now)
 
-        return True
+        return True# }}}
 
-
-class RollPositionsAfterDates(Algo):
+class RollPositionsAfterDates(Algo):# {{{
 
     """
     Roll securities based on the provided map.
@@ -2131,10 +2175,9 @@ class RollPositionsAfterDates(Algo):
         # Now update
         target.root.update(target.now)
 
-        return True
+        return True# }}}
 
-
-class SelectActive(Algo):
+class SelectActive(Algo):# {{{
 
     """
     Sets temp['selected'] based on filtering temp['selected'] to exclude
@@ -2157,10 +2200,9 @@ class SelectActive(Algo):
         closed = target.perm.get("closed", set())
         selected = [s for s in selected if s not in set.union(rolled, closed)]
         target.temp["selected"] = selected
-        return True
+        return True# }}}
 
-
-class ReplayTransactions(Algo):
+class ReplayTransactions(Algo):# {{{
 
     """
     Replay a list of transactions that were executed.
@@ -2207,10 +2249,9 @@ class ReplayTransactions(Algo):
         # Now update
         target.root.update(target.now)
 
-        return True
+        return True# }}}
 
-
-class SimulateRFQTransactions(Algo):
+class SimulateRFQTransactions(Algo):# {{{
     """
     An algo that simulates the outcomes from RFQs (Request for Quote)
     using a "model" that determines which ones becomes transactions and at what price
@@ -2257,20 +2298,18 @@ class SimulateRFQTransactions(Algo):
         # Now update
         target.root.update(target.now)
 
-        return True
+        return True# }}}
 
-
-def _get_unit_risk(security, data, index=None):
+def _get_unit_risk(security, data, index=None):# {{{
     try:
         unit_risks = data[security]
         unit_risk = unit_risks.values[index]
     except Exception:
         # No risk data, assume zero
         unit_risk = 0.0
-    return unit_risk
+    return unit_risk# }}}
 
-
-class UpdateRisk(Algo):
+class UpdateRisk(Algo):# {{{
 
     """
     Tracks a risk measure on all nodes of the strategy. To use this node, the
@@ -2338,10 +2377,9 @@ class UpdateRisk(Algo):
     def __call__(self, target):
         unit_risk_frame = target.get_data("unit_risk")[self.measure]
         self._set_risk_recursive(target, 0, unit_risk_frame)
-        return True
+        return True# }}}
 
-
-class PrintRisk(Algo):
+class PrintRisk(Algo):# {{{
 
     """
     This Algo prints the risk data.
@@ -2363,10 +2401,9 @@ class PrintRisk(Algo):
                 print(self.fmt_string.format(**target.risk))
             else:
                 print(target.risk)
-        return True
+        return True# }}}
 
-
-class HedgeRisks(Algo):
+class HedgeRisks(Algo):# {{{
     """
     Hedges risk measures with selected instruments.
 
@@ -2452,4 +2489,4 @@ class HedgeRisks(Algo):
             if np.isnan(notional) and self.throw_nan:
                 raise ValueError("%s has nan hedge notional" % security)
             target.transact(notional, security)
-        return True
+        return True# }}}

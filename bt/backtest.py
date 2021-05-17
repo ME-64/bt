@@ -9,9 +9,17 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import pyprind
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io as pio
+pio.templates.default = 'plotly_dark'
+pd.options.plotting.backend = 'plotly'
+import olimutils
+import plotly.express as px
 
 
-def run(*backtests):
+
+def run(*backtests):# {{{
     """
     Runs a series of backtests and returns a Result
     object containing the results of the backtests.
@@ -27,10 +35,10 @@ def run(*backtests):
     for bkt in backtests:
         bkt.run()
 
-    return Result(*backtests)
+    return Result(*backtests)# }}}
 
 
-def benchmark_random(backtest, random_strategy, nsim=100):
+def benchmark_random(backtest, random_strategy, nsim=100):# {{{
     """
     Given a backtest and a random strategy, compare backtest to
     a number of random portfolios.
@@ -76,12 +84,10 @@ def benchmark_random(backtest, random_strategy, nsim=100):
     # now create new RandomBenchmarkResult
     res = RandomBenchmarkResult(*bts)
 
-    return res
-
+    return res # }}}
 
 class Backtest(object):
-
-    """
+    """# {{{
     A Backtest combines a Strategy with data to
     produce a Result.
 
@@ -135,9 +141,9 @@ class Backtest(object):
           percentage of the whole portfolio over time
         * additional_data (dict): Additional data passed at construction
 
-    """
+    """# }}}
 
-    def __init__(
+    def __init__(# {{{
         self,
         strategy,
         data,
@@ -174,9 +180,9 @@ class Backtest(object):
         self._original_prices = None
         self._weights = None
         self._sweights = None
-        self.has_run = False
+        self.has_run = False# }}}
 
-    def _process_data(self, data, additional_data):
+    def _process_data(self, data, additional_data):# {{{
         # add virtual row at t0-1day with NaNs
         # this is so that any trading action at t0 can be evaluated relative to
         # a clean starting point. This is related to #83. Basically, if you
@@ -217,9 +223,9 @@ class Backtest(object):
                     np.nan, index=[old.index[0] - pd.DateOffset(days=1)]
                 )
                 new = pd.concat([empty_row, old])
-                self.additional_data[k] = new
+                self.additional_data[k] = new# }}}
 
-    def run(self):
+    def run(self):# {{{
         """
         Runs the Backtest.
         """
@@ -262,10 +268,10 @@ class Backtest(object):
                     bar.stop()
 
         self.stats = self.strategy.prices.calc_perf_stats()
-        self._original_prices = self.strategy.prices
+        self._original_prices = self.strategy.prices# }}}
 
     @property
-    def weights(self):
+    def weights(self):# {{{
         """
         DataFrame of each component's weight over time
         """
@@ -283,17 +289,17 @@ class Backtest(object):
                 )
                 vals = vals.div(self.strategy.values, axis=0)
             self._weights = vals
-            return vals
+            return vals# }}}
 
     @property
-    def positions(self):
+    def positions(self):# {{{
         """
         DataFrame of each component's position over time
         """
-        return self.strategy.positions
+        return self.strategy.positions# }}}
 
     @property
-    def security_weights(self):
+    def security_weights(self):# {{{
         """
         DataFrame containing weights of each security as a
         percentage of the whole portfolio over time
@@ -325,10 +331,10 @@ class Backtest(object):
             # save for future use
             self._sweights = vals
 
-            return vals
+            return vals# }}}
 
     @property
-    def herfindahl_index(self):
+    def herfindahl_index(self):# {{{
         """
         Calculate Herfindahl-Hirschman Index (HHI) for the portfolio.
         For each given day, HHI is defined as a sum of squared weights of
@@ -341,10 +347,10 @@ class Backtest(object):
         a given portfolio
         """
         w = self.security_weights
-        return (w ** 2).sum(axis=1)
+        return (w ** 2).sum(axis=1)# }}}
 
     @property
-    def turnover(self):
+    def turnover(self):# {{{
         """
         Calculate the turnover for the backtest.
 
@@ -359,16 +365,16 @@ class Backtest(object):
         outlaysn = np.abs(outlays[outlays < 0].fillna(value=0).sum(axis=1))
 
         # merge and keep minimum
-        min_outlay = pd.DataFrame({"pos": outlaysp, "neg": outlaysn}).min(axis=1)
+        min_outlay = pd.DataFrame({"pos": outlaysp, "neg": outlaysn}).sum(axis=1)
 
         # turnover is defined as min outlay / nav
         mrg = pd.DataFrame({"outlay": min_outlay, "nav": s.values})
 
-        return mrg["outlay"] / mrg["nav"]
+        return mrg["outlay"] / mrg["nav"]# }}}
 
 
 class Result(ffn.GroupStats):
-
+# {{{
     """
     Based on ffn's GroupStats with a few extra helper methods.
 
@@ -379,15 +385,15 @@ class Result(ffn.GroupStats):
         * backtest_list (list): List of bactests in the same order as provided
         * backtests (dict): Dict of backtests by name
 
-    """
+    """# }}}
 
-    def __init__(self, *backtests):
+    def __init__(self, *backtests):# {{{
         tmp = [pd.DataFrame({x.name: x.strategy.prices}) for x in backtests]
         super(Result, self).__init__(*tmp)
         self.backtest_list = backtests
-        self.backtests = {x.name: x for x in backtests}
+        self.backtests = {x.name: x for x in backtests}# }}}
 
-    def display_monthly_returns(self, backtest=0):
+    def display_monthly_returns(self, backtest=0):# {{{
         """
         Display monthly returns for a specific backtest.
 
@@ -397,9 +403,9 @@ class Result(ffn.GroupStats):
 
         """
         key = self._get_backtest(backtest)
-        self[key].display_monthly_returns()
+        key.display_monthly_returns()# }}}
 
-    def get_weights(self, backtest=0, filter=None):
+    def get_weights(self, backtest=0, filter=None):# {{{
         """
 
         :param backtest: (str, int) Backtest can be either a index (int) or the
@@ -410,16 +416,16 @@ class Result(ffn.GroupStats):
         :return: (pd.DataFrame) DataFrame of weights
         """
 
-        key = self._get_backtest(backtest)
+        backtest = self._get_backtest(backtest)
 
         if filter is not None:
-            data = self.backtests[key].weights[filter]
+            data = backtest.weights[filter]
         else:
-            data = self.backtests[key].weights
+            data = backtest.weights
 
-        return data
+        return data# }}}
 
-    def plot_weights(self, backtest=0, filter=None, figsize=(15, 5), **kwds):
+    def plot_weights(self, backtest=0, filter=None, show=True, **kwds):# {{{
         """
         Plots the weights of a given backtest over time.
 
@@ -429,15 +435,20 @@ class Result(ffn.GroupStats):
             * filter (list, str): filter columns for specific columns. Filter
               is simply passed as is to DataFrame[filter], so use something
               that makes sense with a DataFrame.
-            * figsize ((width, height)): figure size
+            * show (bool): whether to display the figure or return the object
             * kwds (dict): Keywords passed to plot
 
         """
         data = self.get_weights(backtest, filter)
 
-        data.plot(figsize=figsize, **kwds)
+        fig = data.plot(**kwds)
+        if show:
+            fig.show()
+        else:
+            return fig
+        # }}}
 
-    def get_security_weights(self, backtest=0, filter=None):
+    def get_security_weights(self, backtest=0, filter=None):# {{{
         """
 
         :param backtest: (str, int) Backtest can be either a index (int) or the
@@ -448,16 +459,16 @@ class Result(ffn.GroupStats):
         :return: (pd.DataFrame) DataFrame of security weights
         """
 
-        key = self._get_backtest(backtest)
+        backtest = self._get_backtest(backtest)
 
         if filter is not None:
-            data = self.backtests[key].security_weights[filter]
+            data = backtest.security_weights[filter]
         else:
-            data = self.backtests[key].security_weights
+            data = backtest.security_weights
 
-        return data
+        return data# }}}
 
-    def plot_security_weights(self, backtest=0, filter=None, figsize=(15, 5), **kwds):
+    def plot_security_weights(self, backtest=0, filter=None, show=True, **kwds):# {{{
         """
         Plots the security weights of a given backtest over time.
 
@@ -467,36 +478,42 @@ class Result(ffn.GroupStats):
             * filter (list, str): filter columns for specific columns. Filter
                 is simply passed as is to DataFrame[filter], so use something
                 that makes sense with a DataFrame.
-            * figsize ((width, height)): figure size
+            * show (bool): whether to display the figure or return the object
             * kwds (dict): Keywords passed to plot
 
         """
         data = self.get_security_weights(backtest, filter)
 
-        data.plot(figsize=figsize, **kwds)
+        fig = data.plot(**kwds)
+        if show:
+            fig.show()
+        else:
+            return fig
+        # }}}
 
-    def plot_histogram(self, backtest=0, **kwds):
+    def plot_histogram(self, backtest=0, show=True, **kwds):# {{{
         """
         Plots the return histogram of a given backtest over time.
 
         Args:
             * backtest (str, int): Backtest. Can be either a index (int) or the
                 name (str)
+            * show (bool): whether to display the figure or return the object
             * kwds (dict): Keywords passed to plot_histogram
 
         """
         key = self._get_backtest(backtest)
-        self[key].plot_histogram(**kwds)
+        key.plot_histogram(**kwds)# }}}
 
-    def _get_backtest(self, backtest):
+    def _get_backtest(self, backtest):# {{{
         # based on input order
         if type(backtest) == int:
-            return self.backtest_list[backtest].name
+            return self.backtest_list[backtest]
 
         # default case assume ok
-        return backtest
+        return self.backtests[backtest]# }}}
 
-    def get_transactions(self, strategy_name=None):
+    def get_transactions(self, backtest=0):# {{{
         """
         Helper function that returns the transactions in the following format:
 
@@ -509,16 +526,198 @@ class Result(ffn.GroupStats):
               strategy (self.backtest_list[0].name)
 
         """
-        if strategy_name is None:
-            strategy_name = self.backtest_list[0].name
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.get_transactions()# }}}
 
-        # extract strategy given strategy_name
-        return self.backtests[strategy_name].strategy.get_transactions()
+    def get_turnover(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * strategy_name (str): If none, it will take the first backtest's
+              strategy (self.backtest_list[0].name)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.turnover
+        # }}}
+
+    def get_positions(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.positions
+        # }}}
+
+    def get_cash(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.cash
+        # }}}
+
+    def get_fees(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.fees
+        # }}}
+
+    def get_flows(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.flows
+        # }}}
+
+    def get_notional(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.notional_values
+        # }}}
+
+    def get_nav(self, backtest=0):# {{{
+        """
+        Helper function that returns the transactions in the following format:
+
+            Date, Security | quantity, price
+
+        The result is a MultiIndex DataFrame.
+
+        Args:
+            * backtest: (str, int) Backtest can be either a index (int) or the
+                name (str)
+
+        """
+        backtest = self._get_backtest(backtest)
+        return backtest.strategy.prices
+        # }}}
+
+    def get_all(self, backtest=0):# {{{
+        wghts = self.get_security_weights(backtest)
+        turn = self.get_turnover(backtest)
+        turn.name = 'turnover'
+        trans = self.get_transactions(backtest)
+        pos = self.get_positions(backtest)
+        cash = self.get_cash(backtest)
+        cash.name = 'cash'
+        fees = self.get_fees(backtest)
+        fees.name = 'fees'
+        flows = self.get_flows(backtest)
+        flows.name = 'flows'
+        nav = self.get_nav(backtest)
+        nav.name = 'nav'
+        notional = self.get_notional(backtest)
+        notional.name = 'notional_value'
+
+        data = bt.merge(nav, turn, flows, fees, cash, notional)
+
+        return {'data': data, 'transactions': trans, 'positions': pos, 'weights': wghts}
+        # }}}
+
+    def plot_result(self, backtest=0):# {{{
+
+        result = self.get_all(backtest)
+        fig = make_subplots(rows=4, cols=1, shared_xaxes=True,
+                subplot_titles=['Equity Curve', 'Drawdown', 'Security Weights', 'Transactions'],
+                specs=[[{"secondary_y": True}], 
+                    [{"secondary_y": False}],
+                        [{"secondary_y": False}],
+                        [{"secondary_y": False}]])
+
+        d = result['data']
+
+        wght = result['weights']
+        cols = list(wght.columns)
+        wght = wght.reset_index()
+        wght = pd.melt(wght, id_vars='index', value_vars=cols, value_name='weight', var_name='security')
+        nothing = wght.groupby('index')['weight'].sum() == 0
+        nothing = nothing.loc[nothing.values==True]
+        wght = wght.loc[~wght['index'].isin(nothing.index)]
+
+        wght_plot = px.line(wght, x='index', y='weight', color='security')
+        wght_plot = [x for x in wght_plot.select_traces()]
+
+
+        fig.add_trace(go.Scatter(x=d.index, y=d['nav'], name='NAV', legendgroup='1'), row=1, col=1)
+        fig.add_trace(go.Bar(x=d.index, y=d['flows'], name='flows', legendgroup='1'), row=1, col=1, secondary_y=True)
+        for i in wght_plot:
+            # i.update(legendgroup='2')
+            i.update(line_shape='hvh')
+            fig.add_trace(i, row=3, col=1)
+
+        fig.add_trace(go.Scatter(x=d.index, y=d['nav'].q.to_drawdown_series(), name='drawdown'),row=2,col=1)
+
+        fig.update_yaxes(title_text='NAV', row=1, col=1, type='log', secondary_y=False)
+        fig.update_yaxes(title_text='Flows', row=1, col=1, secondary_y=True, showgrid=False)
+        fig.update_yaxes(title_text='Weights', row=3, col=1)
+        fig.update_yaxes(title_text='Drawdown', row=2, col=1)
+        fig.update_xaxes(title_text='Date', row=4, col=1, type='log')
+        # olimutils.crosshair(fig)
+        fig.show(config=olimutils.fig_config())# }}}
+
+
+
+
 
 
 class RandomBenchmarkResult(Result):
-
-    """
+    """# {{{
     RandomBenchmarkResult expands on Result to add methods specific
     to random strategy benchmarking.
 
@@ -530,16 +729,16 @@ class RandomBenchmarkResult(Result):
         * r_stats (Result): Stats for random strategies
         * b_stats (Result): Stats for benchmarked strategy
 
-    """
+    """# }}}
 
-    def __init__(self, *backtests):
+    def __init__(self, *backtests):# {{{
         super(RandomBenchmarkResult, self).__init__(*backtests)
         self.base_name = backtests[0].name
         # seperate stats to make
         self.r_stats = self.stats.drop(self.base_name, axis=1)
-        self.b_stats = self.stats[self.base_name]
+        self.b_stats = self.stats[self.base_name]# }}}
 
-    def plot_histogram(
+    def plot_histogram(# {{{
         self, statistic="monthly_sharpe", figsize=(15, 5), title=None, bins=20, **kwargs
     ):
         """
@@ -575,11 +774,11 @@ class RandomBenchmarkResult(Result):
         ax = ser.hist(bins=bins, figsize=figsize, density=True, **kwargs)
         ax.set_title(title)
         plt.axvline(self.b_stats[statistic], linewidth=4, color="r")
-        ser.plot(kind="kde")
+        ser.plot(kind="kde")# }}}
 
 
 class RenormalizedFixedIncomeResult(Result):
-    """
+    """# {{{
     A new result type to help compare results generated from
     :class:`FixedIncomeStrategy <bt.core.FixedIncomeStrategy>`.
     Recall that in a fixed income strategy, the normalized prices are computed
@@ -597,9 +796,9 @@ class RenormalizedFixedIncomeResult(Result):
     Args:
         * normalizing_value: pd.Series, float or dict thereof(by strategy name)
         * backtests (list): List of backtests (i.e. from Result.backtest_list)
-    """
+    """# }}}
 
-    def __init__(self, normalizing_value, *backtests):
+    def __init__(self, normalizing_value, *backtests):# {{{
         for backtest in backtests:
             if not backtest.strategy.fixed_income:
                 raise ValueError(
@@ -615,9 +814,9 @@ class RenormalizedFixedIncomeResult(Result):
         ]
         super(Result, self).__init__(*tmp)
         self.backtest_list = backtests
-        self.backtests = {x.name: x for x in backtests}
+        self.backtests = {x.name: x for x in backtests}# }}}
 
-    def _price(self, s, v):
+    def _price(self, s, v):# {{{
         """
         Compute the new price series from the strategy (s) and the
         normalizing value (v)
@@ -626,4 +825,4 @@ class RenormalizedFixedIncomeResult(Result):
         returns = s.values.diff() - s.flows
         prices = bt.core.PAR * (1.0 + (returns / v).cumsum())
         prices.iloc[0] = bt.core.PAR
-        return prices
+        return prices# }}}
