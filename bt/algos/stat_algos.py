@@ -201,14 +201,13 @@ class StatSharpeRatio(Algo):# {{{
         target.temp['sharpe_ratio'] = uni.std()
         return True# }}}
 
-class StatHL(Algo):# {{{
+class StatRSI(Algo):# {{{
 
     """
-    Sets temp['high_low'] 
+    Sets temp['rsi'] with the rsi using `n` lookback
 
-    Sets the 'stat' based on the total return of each element in
-    temp['selected'] over a given lookback period. The total return
-    is determined by ffn's calc_total_return.
+    Sets the 'rsi' based on the relative strength indicator for the
+    instruments over the `n` lookback period.
 
     Args:
         * lookback (int): lookback period.
@@ -216,25 +215,32 @@ class StatHL(Algo):# {{{
           the inteval [now - lookback, now - lag]
 
     Sets:
-        * sharpe_ratio
+        * total_return
 
     Requires:
         * selected
 
     """
 
-    def __init__(self, lookback=252, lag=1):
-        super(StatTotalReturn, self).__init__()
+    def __init__(self, lookback=14, lag=1):
+        super(StatRSI, self).__init__()
         self.lookback = lookback
         self.lag = lag
 
     def __call__(self, target):
         selected = (target.temp["selected"]['long'] + target.temp['selected']['short'])
-        # t0 = target.now - self.lag
 
         uni = target.universe
-        uni = uni.loc[uni.index <= target.now, selected]
+        uni = uni.loc[uni.index <= target.now, list(set(selected))]
         uni = uni.iloc[-self.lookback:-self.lag]
 
-        target.temp['sharpe_ratio'] = uni.std()
+        delta = uni.diff().copy()
+        du, dd = delta.copy(), delta.copy()
+        du[du < 0] = 0
+        dd[dd > 0] = 0
+        ru = du.mean()
+        rd = dd.mean().abs()
+        rs = ru / rd
+        rsi = 100 - (100 / (1 + rs))
+        target.temp['rsi'] = rsi
         return True# }}}

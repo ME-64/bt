@@ -623,11 +623,13 @@ class SelectApplyToStat(Algo):# {{{
         * selected
     """
 
-    def __init__(self, stat_name, func, longs=True, shorts=False):
+    def __init__(self, stat_name, long_func=None, longs=True, shorts=False, short_func=None):
         self.longs = longs
         self.shorts = shorts
         self.stat_name = stat_name
-        self.func = func
+        self.long_func = long_func
+        self.short_func = short_func
+
 
     def __call__(self, target):
 
@@ -636,16 +638,16 @@ class SelectApplyToStat(Algo):# {{{
 
         stat = target.temp[self.stat_name]
 
-        res = self.func(stat)
-
-        longs = list((res.loc[res == True]).index)
-        shorts = list((res.loc[res == False]).index)
 
         if self.longs:
+            res_long = self.long_func(stat)
+            longs = list((res_long.loc[res_long == True]).index)
             target.temp['selected']['long'] = [x for x in target.temp['selected']['long'] if x in longs]
         else:
             target.temp['selected']['long'] = []
         if self.shorts:
+            res_short = self.short_func(stat)
+            shorts = list((res_short.loc[res_short == True]).index)
             target.temp['selected']['short'] = [x for x in target.temp['selected']['short'] if x in shorts]
         else:
             target.temp['selected']['short'] = []

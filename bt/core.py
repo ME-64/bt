@@ -573,7 +573,7 @@ class StrategyBase(Node):# {{{
         # and setup if so
         if self is not self.parent:
             self._paper_trade = True
-            self._paper_amount = 1000000
+            self._paper_amount = 1000.0
 
             paper = deepcopy(self)
             paper.parent = paper
@@ -1103,7 +1103,7 @@ class StrategyBase(Node):# {{{
         prc = pd.DataFrame({x.name: x.prices for x in self.securities}).unstack()
 
         # get security positions
-        positions = pd.DataFrame({x.name: x.positions for x in self.securities})
+        positions = pd.DataFrame({x.full_name: x.positions for x in self.securities})
         # trades are diff
         trades = positions.diff()
         # must adjust first row
@@ -1114,7 +1114,7 @@ class StrategyBase(Node):# {{{
         # Adjust prices for bid/offer paid if needed
         if self._bidoffer_set:
             bidoffer = pd.DataFrame(
-                {x.name: x.bidoffers_paid for x in self.securities}
+                {x.full_name: x.bidoffers_paid for x in self.securities}
             ).unstack()
             prc += bidoffer / trades
 
@@ -1123,10 +1123,14 @@ class StrategyBase(Node):# {{{
         )
 
         # set names
-        res.index.names = ["Security", "Date"]
+        res.index.names = ['full_security_name', 'date']
 
         # swap levels so that we have (date, security) as index and sort
         res = res.swaplevel().sort_index()
+
+        res = res.reset_index()
+        res['security'] = res['full_security_name'].str.split('>')
+        res = res[['date', 'full_security_name', 'security', 'quantity', 'price']]
 
         return res
 
@@ -1500,6 +1504,7 @@ class SecurityBase(Node):# {{{
             * update (bool): Force update?
 
         """
+        # print(f'name: {self.name} | amount: {amount} | now: {self.now}')
 
         # will need to update if this has been idle for a while...
         # update if needupdate or if now is stale

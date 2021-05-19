@@ -94,6 +94,20 @@ class Debug(Algo):# {{{
         pdb.set_trace()
         return True# }}}
 
+class SetCash(Algo):# {{{
+
+    """
+    algo to set a cash in percentage. This is used in `bt.algos.Rebalance` as
+    the amount of cash to set aside.
+    """
+
+    def __init__(self, cash=0.0):
+        self.cash = cash
+
+    def __call__(self, target):
+        target.temp['cash'] = self.cash
+        return True# }}}
+
 class PrintRisk(Algo):# {{{
 
     """
@@ -116,4 +130,44 @@ class PrintRisk(Algo):# {{{
                 print(self.fmt_string.format(**target.risk))
             else:
                 print(target.risk)
+        return True# }}}
+
+class DebugPortfolioLevel(Algo):# {{{
+    """
+    Print portfolio level information relevant to this strategy
+    """
+    def __call__( self, target ):
+        flows = target.flows.loc[ target.now ]
+        if flows:
+            fmt_str = '{now} {name}: Price = {price:>6.2f}, Value = {value:>10,.0f}, Flows = {flows:>8,.0f}'
+        else:
+            fmt_str = '{now} {name}: Price = {price:>6.2f}, Value = {value:>10,.0f}'
+        print( fmt_str.format(
+            now = target.now,
+            name = target.name,
+            price = target.price,
+            value = target.value,
+            flows = flows
+            ) )
+        return True
+        # }}}
+
+class DebugTradeLevel(Algo):# {{{
+    """
+    Print trade level information
+    """
+    def __call__( self, target ):
+        flows = target.flows.loc[ target.now ]
+        # Check that sub-strategy is active (and not paper trading, which is always active)
+        #if (target.capital > 0 or flows != 0) and target.parent != target:
+        #     if flows:
+        #         fmt_str = '{name:>33}: Price = {price:>6.2f}, Value = {value:>10,.0f}, Flows = {flows:>8,.0f}'
+        #     else:
+        fmt_str = '{name:>33}: Price = {price:>6.2f}, Value = {value:>10,.0f}'
+        print(fmt_str.format(
+            now = target.now,
+            name = target.name,
+            price = target.price,
+            value = target.value,
+            ))
         return True# }}}
